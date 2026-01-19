@@ -1,0 +1,13 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+load("@spu_pip_dev//:requirements.bzl", "all_requirements")
+
+package(default_visibility = ["//visibility:public"])
+
+py_binary(
+    name = "privmark",
+    srcs = ["privmark.py"],
+    data = [
+        "//conf:3pc.json",
+    ],
+    deps = all_requirements,  # pip deps including secretflow-spu
+)

@@ -1,0 +1,72 @@
+\appendix
+
+\section{Survey of black-box LLM Watermarking Techniques}\label{sec:wm_solution}
+
+In this appendix we compare representative text‐watermarking methods along the criteria of fidelity, robustness, efficiency, and undetectability. Table~\ref{tab:llm_watermarking_part1} summarizes key metrics from each technique. Below we briefly describe each approach and its experimental performance.
+
+\subsection{Unicode Watermarking~\cite{sato2023embarrassinglysimpletextwatermarks}}
+Unicode‐based watermarks (e.g., zero‐width or homoglyph insertions) leave the visible text unchanged, so fidelity is perfect (BLEU and PPL drop 0\%). These marks are extremely fragile: standard text normalization (e.g., stripping formatting or normalizing whitespace) removes them entirely, so robustness is ``very weak''. Insertion and detection are trivial (string operations only), giving extremely high efficiency. The watermark is imperceptible to human readers (appearance unchanged), though detectable by a specialized validator with near 100\% true positive on clean text (and essentially 0\% false positives).
+
+\subsection{Yang \emph{et al.} \cite{yang2023watermarkingtextgeneratedblackbox}}
+Yang \emph{et al.} propose a black‐box scheme that encodes each word as a random bit and substitutes ``0''‐bit words with context‐appropriate synonyms (via BERT/WordNet). This preserves meaning very well, so fidelity is high (semantics are largely unchanged). Robustness is moderate: the watermark is hard to erase without altering semantics, but paraphrasing attacks can largely defeat it (e.g., detection rate, F1-score, drops from $\sim$81\% on clean text to $\sim$30\% after paraphrase of English texts - Figure 10-11). Efficiency is moderate: encoding requires synonym lookup with a BERT model, which is more expensive than string‐level methods but much cheaper than invoking an LLM. Undetectability is high: humans see only plausible synonyms, so the watermark is essentially imperceptible to readers.
+
+\subsection{DeepTextMark \cite{munyer2024deeptextmarkdeeplearningdriventext}}
+DeepTextMark uses Word2Vec and sentence embeddings to apply many small synonym swaps, and trains a Transformer to detect the pattern. It achieves very high fidelity (imperceptible edits): reported semantic similarity (mSMS) is $\sim$0.99, i.e., almost no meaning shift. Detection accuracy is also very high: in experiments, sentence‐level detection accuracy approaches $\sim$95\% or more (near 100\% with multiple sentences). The watermark survives moderate editing: e.g., removing or adding a few sentences only slightly degrades performance (the AUC remains high, see Table~3–5). Efficiency is good: insertion takes on the order of 0.28\,s per sentence (single‐core CPU) and detection $\sim$0.002\,s, making it practical. In summary, DeepTextMark achieves high fidelity and robustness with reasonably low overhead. The watermark is imperceptible to humans (word substitutions are context‐appropriate).
+
+\subsection{PostMark \cite{chang2024postmarkrobustblackboxwatermark}}
+PostMark is a black‐box method that selects an input‐dependent set of ``watermark words'' via semantic embeddings and uses an instruction‐tuned LLM to rewrite the text to include those words. It produces an imperceptible watermark (cosine similarity of embeddings original vs.\ watermarked is $\sim$0.94--0.95). Detection is extremely strong: at 1\% FPR, PostMark@12 achieves $\sim$99--100\% TPR on clean text, and still $\sim$52--59\% TPR after GPT‐3.5 paraphrasing. This greatly outperforms simpler schemes (e.g., Yang’s) which collapse near 0\% after paraphrase. The trade‐off is efficiency: PostMark is slow and costly, as it makes multiple LLM calls. In one report, watermarking a $\sim$280‐token passage took $\sim$36\,s (on Llama‐3‐8B) and cost about \$1.2 per 100 tokens. Detection itself is trivial once watermarked (just check for the chosen words). Undetectability is high: human evaluation found that the inserted words cannot be reliably spotted, and text quality (coherence, relevance) remains high.
+
+\subsection{REMARK-LLM \cite{299615}}
+REMARK-LLM is an end‐to‐end neural watermark that learns to embed a binary message via token replacement and decodes it with a neural extractor. It is explicitly trained to preserve meaning. Experiments show REMARK-LLM can embed, e.g., 64 bits in 640 tokens with only slight impact on semantics. Semantic fidelity is very high (BERTScore $\approx$0.92--0.94 vs.\ original). Watermark extraction is extremely reliable: most embedded bits are recovered (about 95--98\% accuracy on clean text, i.e., word‐error $\sim$2--5\%). Robustness is also strong: after deletion/addition attacks, detection AUC remains around 0.88--0.90, far above prior neural methods. Efficiency is moderate: REMARK uses a trained model (requires GPU $\sim$5.8\,GB) but no LLM calls. On a T5‐large backbone it takes about 1.2\,s to watermark an 80‐token segment. Overall, REMARK-LLM offers high payload, high fidelity, and good robustness.
+
+
+
+\section{Generation of examples}\label{sec:examples}
+We generate example thanks to Google Gemini 2.5 Pro. Examples are as follows.
+All the examples are available on the \href{https://github.com/ElPoul3to/PrivMark/blob/main/experiments/watermark_examples.json}{repository} of the project.
+
+\begin{figure}[h]
+    \centering    
+    % Draw a rounded rectangle with shadow and gradient background
+    \begin{tikzpicture}
+        % Create gradient background from light gray to white        
+        % Draw rounded rectangle with shadow and improved spacing
+        \node[rectangle, rounded corners, fill=white, text width=\linewidth, inner sep=0pt, align=left] (box) {
+        \begin{minted}[
+            linenos,               % Show line numbers
+            framesep=2mm,          % Frame separation from the code
+            numbersep=4pt,         % Line number separation
+            bgcolor=verylightgray, % Light background color
+            breaklines,            % Enable line breaking
+            autogobble,            % Automatically trim leading spaces
+            fontsize=\tiny % Set font size to footnotesize
+        ]{python}
+    "id": 1,
+    "word_count": 105,
+    "watermark_count": 12,
+    "watermark_words": ["monumental", "classical", "qubits", "superposition", "simultaneously", "entanglement", "incredible", "materials", "encryption", "maintaining", "enormous", "decoherence"
+    ],
+    "candidate_text": "Quantum computing represents a monumental leap forward from classical computing. Instead of bits, which store information as either 0 or 1, quantum computers use qubits. These qubits can exist in a superposition, a combination of both states simultaneously. This fundamental property, along with entanglement, allows quantum machines to process a vast number of calculations in parallel. The potential applications are incredible, ranging from drug discovery and materials science to breaking current encryption standards. However, building and maintaining stable quantum computers presents enormous technical challenges, demanding extremely low temperatures and isolation from environmental interference to prevent decoherence.",
+    "removing_attack": "Quantum computing represents a leap forward from computing. Instead of bits, which store information as either 0 or 1, quantum computers use qubits. This property allows quantum machines to process a vast number of calculations in parallel. The potential applications range from drug discovery and science to breaking current standards. However, building stable quantum computers presents technical challenges, demanding extremely low temperatures and isolation from environmental interference to prevent issues.",
+    "paraphrase_attack": "A massive advancement over traditional computing is offered by quantum computation. Quantum computers utilize quantum bits rather than standard bits that hold data as a 0 or 1. These can be in a mixed state, representing both values at the same time. This core characteristic, combined with quantum linking, enables these devices to perform a huge volume of computations concurrently. The possible uses are amazing, spanning from creating new medicines and substances to defeating modern security codes. Nevertheless, constructing and sustaining stable quantum systems poses immense engineering difficulties, requiring frigid conditions and shielding from outside disturbances to avoid losing the quantum state.",
+    "domain": "Technology"
+  },
+  {
+    "id": 2,
+    "word_count": 102,
+    "watermark_count": 12,
+    "watermark_words": ["singular", "complex", "incessant", "instability", "crippled", "innovation", "indefensible", "expenditure", "decimated", "gradually", "foundations", "fragmentation"
+    ],
+    "candidate_text": "The decline of the Western Roman Empire was not a singular event but a complex, centuries-long process. Historians attribute the collapse to a combination of factors, including incessant barbarian invasions, internal political instability, and severe economic troubles. The over-reliance on slave labor crippled technological innovation, while vast, indefensible borders required an enormous military expenditure that the state could not sustain. Furthermore, a series of plagues decimated the population, reducing the tax base and the number of available soldiers. This perfect storm of challenges gradually eroded the empire's foundations, culminating in its eventual fragmentation.",
+    "removing_attack": "The decline of the Western Roman Empire was not an event but a long process. Historians attribute the collapse to a combination of factors, including barbarian invasions, internal political issues, and severe economic troubles. The over-reliance on slave labor hindered progress, while vast borders required a military that the state could not sustain. Furthermore, a series of plagues reduced the population, the tax base and the number of available soldiers. This perfect storm of challenges eroded the empire's base, culminating in its eventual breakup.",
+    "paraphrase_attack": "The fall of the Western Roman Empire was a multifaceted, protracted procedure rather than a single occurrence. Scholars suggest that a mix of elements led to the downfall, such as constant barbarian incursions, domestic political turmoil, and grave financial difficulties. A heavy dependence on enslaved workers stifled technological advancement, and extensive, unprotectable frontiers demanded a massive military budget the government could no longer afford. Additionally, a succession of epidemics wiped out many people, shrinking tax revenue and potential recruits. This confluence of crises slowly weakened the empire's core, leading to its ultimate dissolution.",
+    "domain": "History"
+  }
+\end{minted}
+};
+\end{tikzpicture}
+\vspace{-25pt}
+\caption{Example of insertion outputs of \tNAME{}.}
+    \label{fig:querytrans}
+    \vspace{-5pt}
+\end{figure}

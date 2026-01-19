@@ -1,0 +1,37 @@
+--find-links https://download.pytorch.org/whl/torch_stable.html
+
+spu==spu-0.9.3b0
+
+# basic deps
+grpcio==1.66.0
+numpy>=1.22.0, <2
+cloudpickle>=2.0.0
+multiprocess>=0.70.12.2
+cachetools>=5.0.0
+jax[cpu]>=0.4.16, <=0.4.34 
+termcolor>=2.0.0
+pandas>=1.4.2
+flax<0.10.0
+scikit-learn<1.6.0
+
+# for tests
+absl-py>=1.1.0
+tensorflow>=2.12.0
+h5py!=3.11.0; platform_machine == 'aarch64'
+
+# for examples
+dm-haiku
+plotnine
+jraph
+optax
+torch==2.3.0+cpu
+torch_xla==2.3.0; sys_platform == "linux" and platform_machine == 'x86_64'
+#torchvision
+torchvision==0.18.0+cpu
+tensorflow_datasets
+keras
+sentence-transformers>=2.2.2
+setuptools<71.0.0 # https://github.com/pypa/setuptools/issues/4487
+transformers
+datasets
+async_timeout
